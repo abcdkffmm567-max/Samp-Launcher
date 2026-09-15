@@ -18,6 +18,10 @@ jobs:
           java-version: '17'
 
 
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
       - name: Install Android native toolchain
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1" "ndk;26.2.11394342"
 
