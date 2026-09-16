@@ -81,6 +81,16 @@ public class MainActivity extends AppCompatActivity {
 
     int i1 = 0;
 
+    private final Handler serverRefreshHandler = new Handler();
+    private boolean serverQueryRunning = false;
+    private final Runnable serverRefreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            queryInfinityServer();
+            serverRefreshHandler.postDelayed(this, 15000);
+        }
+    };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
         getServersInfo();
         getFavoriteServersInfo();
+        serverRefreshHandler.post(serverRefreshRunnable);
     }
 
     public final ArrayList<SAMPServerInfo> getServerList() {
@@ -180,6 +191,66 @@ public class MainActivity extends AppCompatActivity {
         getServerList().add(infinity);
 
         return true;
+    }
+
+    private void queryInfinityServer() {
+        if (serverQueryRunning || getServerList().isEmpty()) return;
+        serverQueryRunning = true;
+
+        new AsyncTask<Void, Void, String[]>() {
+            @Override
+            protected String[] doInBackground(Void... ignored) {
+                SampQueryAPI query = new SampQueryAPI("148.113.8.119", 26000);
+                try {
+                    if (!query.mo7166d()) return null;
+                    return query.mo7164b();
+                } finally {
+                    if (query.f7277a != null) query.f7277a.close();
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String[] info) {
+                serverQueryRunning = false;
+                if (info != null && info.length >= 6 && !getServerList().isEmpty()) {
+                    try {
+                        SAMPServerInfo server = getServerList().get(0);
+                        server.setHasPassword("1".equals(info[0]));
+                        server.setCurrentPlayerCount(Integer.parseInt(info[1]));
+                        server.setMaxPlayerCount(Integer.parseInt(info[2]));
+                        server.setServerName(info[3]);
+                        server.setServerMode(info[5]);
+                        server.setServerStatus(SAMPServerInfo.Status.ONLINE);
+                    } catch (Exception e) {
+                        Log.e("InfinityQuery", "Invalid server response", e);
+                    }
+                }
+                refreshHostedServers();
+            }
+        }.execute();
+    }
+
+    private void refreshHostedServers() {
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof ServersFragment && fragment.isAdded()) {
+                for (Fragment child : fragment.getChildFragmentManager().getFragments()) {
+                    if (child instanceof ServerPagesItemFragment
+                            && ((ServerPagesItemFragment) child).getPage() == 1
+                            && child.getView() != null) {
+                        RecyclerView list = child.requireView().findViewById(R.id.server_recycler);
+                        if (list != null && list.getAdapter() != null) {
+                            list.getAdapter().notifyDataSetChanged();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        serverRefreshHandler.removeCallbacks(serverRefreshRunnable);
+        super.onDestroy();
     }
 
     public void getFavoriteServersInfo()
