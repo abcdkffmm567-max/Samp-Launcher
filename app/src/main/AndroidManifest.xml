@@ -82,6 +82,14 @@
         android:exported="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:windowSoftInputMode="adjustNothing">
+    </activity>
+
+    <activity
+        android:name=".launcher.InfinityLoadingActivity"
+        android:screenOrientation="portrait"
+        android:exported="true"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:windowSoftInputMode="adjustNothing">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />

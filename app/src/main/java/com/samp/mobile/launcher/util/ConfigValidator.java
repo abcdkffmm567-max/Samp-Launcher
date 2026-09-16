@@ -6,6 +6,10 @@ import android.content.res.AssetManager;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,11 +46,64 @@ public class ConfigValidator {
             File destination = new File(externalFilesDir, database + ".ini");
             copyFileIfMissing(source, destination);
         }
+
+        removeMissingCutsceneArchiveEntry(externalFilesDir);
         /*File file2 = new File(externalFilesDir, "gta_sa.set");
         if (!file2.exists()) {
             file2.getParentFile().mkdirs();
             copyAsset(context.getAssets(), "gta_sa.set", file2.toString());
         }*/
+    }
+
+    /**
+     * Some modified packs reference TEXDB/CUTSCENE.IMG in gta.dat but do not
+     * include that optional archive. GTA's streaming worker later seeks on the
+     * null file handle and crashes. Remove only that stale IMG entry and keep a
+     * one-time backup beside gta.dat.
+     */
+    private static void removeMissingCutsceneArchiveEntry(File root) {
+        File cutsceneUpper = new File(root, "TEXDB/CUTSCENE.IMG");
+        File cutsceneLower = new File(root, "texdb/cutscene.img");
+        if (cutsceneUpper.isFile() || cutsceneLower.isFile()) return;
+
+        File gtaDat = new File(root, "SAMP/gta.dat");
+        if (!gtaDat.isFile()) gtaDat = new File(root, "data/gta.dat");
+        if (!gtaDat.isFile()) return;
+
+        StringBuilder filtered = new StringBuilder();
+        boolean changed = false;
+        try (BufferedReader reader = new BufferedReader(new FileReader(gtaDat))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.toUpperCase().contains("CUTSCENE.IMG")) {
+                    changed = true;
+                    continue;
+                }
+                filtered.append(line).append('\n');
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (!changed) return;
+        File backup = new File(gtaDat.getParentFile(), "gta.dat.infinity.bak");
+        copyFileIfMissing(gtaDat, backup);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(gtaDat, false))) {
+            writer.write(filtered.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (backup.isFile()) copyFileReplacing(backup, gtaDat);
+        }
+    }
+
+    private static void copyFileReplacing(File source, File destination) {
+        try (InputStream input = new FileInputStream(source);
+             OutputStream output = new FileOutputStream(destination, false)) {
+            copyFile(input, output);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void copyAssetIfMissing(AssetManager assets, String asset, File destination) {
