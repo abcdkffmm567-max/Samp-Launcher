@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,6 +45,7 @@ import com.samp.mobile.launcher.fragments.ServerPagesItemFragment;
 import com.samp.mobile.launcher.fragments.ServersFragment;
 import com.samp.mobile.launcher.fragments.SettingsFragment;
 import com.samp.mobile.launcher.util.ConfigValidator;
+import com.samp.mobile.launcher.util.GpuDataManager;
 import com.samp.mobile.launcher.util.SAMPServerInfo;
 import com.samp.mobile.launcher.util.SampQueryAPI;
 import com.samp.mobile.launcher.util.SharedPreferenceCore;
@@ -63,6 +66,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 @Obfuscate
 public class MainActivity extends AppCompatActivity {
 
@@ -102,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         mFavoriteServersList = new ArrayList<>();
 
         ConfigValidator.validateConfigFiles(this);
+        initializeGpuDataSupport();
 
         //if(!SignatureChecker.isSignatureValid(this, getPackageName()))
         //{
@@ -159,6 +166,32 @@ public class MainActivity extends AppCompatActivity {
         getServersInfo();
         getFavoriteServersInfo();
         serverRefreshHandler.post(serverRefreshRunnable);
+    }
+
+    private void initializeGpuDataSupport() {
+        GLSurfaceView gpuView = new GLSurfaceView(this);
+        gpuView.setEGLContextClientVersion(2);
+        gpuView.setAlpha(0.0f);
+        gpuView.setRenderer(new GLSurfaceView.Renderer() {
+            @Override
+            public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+                String renderer = GLES20.glGetString(GLES20.GL_RENDERER);
+                String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
+                String suffix = GpuDataManager.detectSuffix(renderer, extensions);
+                int renamed = GpuDataManager.prepare(MainActivity.this, suffix);
+                Log.i("InfinityGPU", "GPU=" + renderer + ", format=" + suffix +
+                        ", renamed=" + renamed);
+            }
+
+            @Override
+            public void onSurfaceChanged(GL10 gl, int width, int height) { }
+
+            @Override
+            public void onDrawFrame(GL10 gl) { }
+        });
+        gpuView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        ViewGroup root = findViewById(R.id.main_layout);
+        root.addView(gpuView, new ViewGroup.LayoutParams(1, 1));
     }
 
     public final ArrayList<SAMPServerInfo> getServerList() {
