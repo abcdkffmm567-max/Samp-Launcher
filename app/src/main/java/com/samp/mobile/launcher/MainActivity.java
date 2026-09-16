@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 @Obfuscate
 public class MainActivity extends AppCompatActivity {
 
-    public String[] tabTitles = { "Servers", "Info", "Settings" };
+    public String[] tabTitles = { "Home", "Play", "Settings" };
     public int[] tabImages = { R.drawable.ic_mainmenu, R.drawable.ic_server, R.drawable.ic_settingsmenu};
     public int[] tabSelectedImages = { R.drawable.ic_mainmenu_on, R.drawable.ic_serveron, R.drawable.ic_settingsmenu_on};
 
@@ -161,64 +161,25 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean getServersInfo()
     {
-        final boolean[] z = {false};
-        Volley.newRequestQueue(getApplicationContext()).add(new StringRequest("https://samp-mobile.shop/hosted.json", new Response.Listener<String>() {
+        getServerList().clear();
 
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject  = new JSONObject(new String(response.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
-                    JSONArray jsonArray = jsonObject.getJSONArray("query");
-                    for(int i = 0; i<jsonArray.length(); i++) {
-                        JSONObject jSONObject = jsonArray.getJSONObject(i);
-                        SAMPServerInfo sAMPServerInfo = new SAMPServerInfo();
-                        sAMPServerInfo.setId(jSONObject.getInt("number"));
-                        sAMPServerInfo.setServerName(jSONObject.getString("name"));
-                        sAMPServerInfo.setAddress(jSONObject.getString("ip"));
-                        sAMPServerInfo.setPort(jSONObject.getInt("port"));
-                        sAMPServerInfo.setCurrentPlayerCount(jSONObject.getInt("online"));
-                        sAMPServerInfo.setMaxPlayerCount(jSONObject.getInt("maxplayers"));
-                        sAMPServerInfo.setHasPassword(jSONObject.getBoolean("password"));
-                        sAMPServerInfo.setServerStatus(SAMPServerInfo.Status.ONLINE);
-                        sAMPServerInfo.setPing(12);
-                        getServerList().add(sAMPServerInfo);
-                    }
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
+        SAMPServerInfo infinity = new SAMPServerInfo();
+        infinity.setId(1);
+        infinity.setProjId(2);
+        infinity.setServerName("Infinity Role Play");
+        infinity.setAddress("148.113.8.119");
+        infinity.setPort(26000);
+        infinity.setCurrentPlayerCount(0);
+        infinity.setMaxPlayerCount(1000);
+        infinity.setHasPassword(false);
+        infinity.setServerMode("Role Play");
+        infinity.setLanguage("Sinhala / English");
+        infinity.setServerStatus(SAMPServerInfo.Status.ONLINE);
+        infinity.setPing(0);
+        infinity.setQueried(true);
+        getServerList().add(infinity);
 
-                for (Fragment fragment : getSupportFragmentManager().getFragments()) {
-                    if (fragment instanceof ServersFragment) {
-                        while (!fragment.isAdded()) {
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        if(fragment.isAdded()) {
-                            for (Fragment fragment2 : fragment.getChildFragmentManager().getFragments()) {
-                                if ((fragment2 instanceof ServerPagesItemFragment) && ((ServerPagesItemFragment) fragment2).getPage() == 1 && fragment2.getView() != null) {
-                                    Log.d("AXL", "getserverslist");
-                                    ((RecyclerView.Adapter) Objects.requireNonNull(((RecyclerView) ((View) fragment2.requireView()).findViewById(R.id.server_recycler)).getAdapter())).notifyDataSetChanged();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                z[0] = true;
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("x1y2z", "error " + error.toString());
-                getServersInfo();
-                z[0] = false;
-            }
-        }));
-
-        return z[0];
+        return true;
     }
 
     public void getFavoriteServersInfo()
