@@ -130,6 +130,14 @@ public class FavouriteServerInformationFragment extends Dialog {
         mConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                File missingBase = GpuDataManager.findMissingBaseGameFile(act);
+                if (missingBase != null) {
+                    Toast.makeText(act,
+                            "Base GTA data is incomplete. Copy " + missingBase.getName() +
+                                    " into Android/data/com.samp.mobile/files and try again.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
                 File missingTexture = GpuDataManager.findMissingCoreTexture(act);
                 if (missingTexture != null) {
                     Toast.makeText(act,

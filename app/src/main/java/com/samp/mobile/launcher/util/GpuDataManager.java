@@ -173,4 +173,19 @@ public final class GpuDataManager {
         if (!player.isFile() || player.length() == 0) return player;
         return null;
     }
+
+    /** Base GTA expansion files required by CdStreamThread. */
+    public static File findMissingBaseGameFile(Context context) {
+        File root = context.getExternalFilesDir(null);
+        if (root == null) return new File("external-files-unavailable");
+        File cinfo = new File(root, "CINFO.BIN");
+        if (!cinfo.isFile() || cinfo.length() == 0) return cinfo;
+        File expansion = new File(root, "GTASAsf10.b");
+        if (!expansion.isFile() || expansion.length() == 0) return expansion;
+        File mainScm = new File(root, "SAMP/main.scm");
+        if (!mainScm.isFile() || mainScm.length() == 0) return mainScm;
+        File scriptImg = new File(root, "SAMP/script.img");
+        if (!scriptImg.isFile() || scriptImg.length() == 0) return scriptImg;
+        return null;
+    }
 }

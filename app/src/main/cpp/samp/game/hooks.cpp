@@ -1320,7 +1320,8 @@ void NvUtilInit_hook()
 
     ReadSettingFile();
 
-    ApplyFPSPatch(120);
+    // Respect the launcher setting instead of forcing every device to 120 FPS.
+    ApplyFPSPatch(pSettings ? (uint8_t)pSettings->Get().iFPSCount : 60);
 }
 
 struct stFile
@@ -1605,9 +1606,25 @@ static uint32_t dwRLEDecompressSourceSize = 0;
 size_t (*OS_FileRead)(OSFile a1, void *buffer, size_t numBytes);
 size_t OS_FileRead_hook(OSFile a1, void *buffer, size_t numBytes)
 {
+    if (!a1 || !buffer || numBytes == 0) {
+        FLog("OS_FileRead blocked invalid stream handle");
+        return 0;
+    }
     dwRLEDecompressSourceSize = numBytes;
 
     return OS_FileRead(a1, buffer, numBytes);
+}
+
+int (*OS_FileSetPosition)(OSFile file, int position);
+int OS_FileSetPosition_hook(OSFile file, int position)
+{
+    // Modified/incomplete data packs can leave an IMG streaming slot without
+    // a valid file. libGTASA dereferences file+8 and crashes at address 0x8.
+    if (!file) {
+        FLog("OS_FileSetPosition blocked null stream handle (position=%d)", position);
+        return -1;
+    }
+    return OS_FileSetPosition(file, position);
 }
 
 void (*RLEDecompress)(uint8_t* pDest, size_t uiDestSize, uint8_t const* pSrc, size_t uiSegSize, uint32_t uiEscape);
@@ -1824,6 +1841,7 @@ void InstallSpecialHooks()
     CHook::InstallPLT(g_libGTASA + (VER_x32 ? 0x6701D4 : 0x840708), &RLEDecompress_hook, &RLEDecompress);
 
     CHook::InlineHook("_Z11OS_FileReadPvS_i", &OS_FileRead_hook, &OS_FileRead);
+    CHook::InlineHook("_Z18OS_FileSetPositionPvi", &OS_FileSetPosition_hook, &OS_FileSetPosition);
 
 	CHook::InlineHook("_Z32_rxOpenGLDefaultAllInOneRenderCBP10RwResEntryPvhj", &rxOpenGLDefaultAllInOneRenderCB_hook, &rxOpenGLDefaultAllInOneRenderCB);
 	CHook::InlineHook("_ZN25CCustomBuildingDNPipeline18CustomPipeRenderCBEP10RwResEntryPvhj", &CCustomBuildingDNPipeline__CustomPipeRenderCB_hook, &CCustomBuildingDNPipeline__CustomPipeRenderCB);

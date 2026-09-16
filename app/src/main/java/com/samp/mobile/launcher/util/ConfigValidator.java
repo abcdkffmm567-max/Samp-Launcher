@@ -37,6 +37,16 @@ public class ConfigValidator {
         copyAssetIfMissing(context.getAssets(), "scache_small_low.txt",
                 new File(externalFilesDir, "scache_small_low.txt"));
 
+        // If Android allows access, import the two base GTA files from the
+        // original Rockstar installation. On newer Android versions scoped
+        // storage can block this; the connect screen will then name the file
+        // the user must copy manually.
+        File originalRoot = new File("/storage/emulated/0/Android/data/com.rockstargames.gtasa/files");
+        copyFileIfMissing(new File(originalRoot, "CINFO.BIN"),
+                new File(externalFilesDir, "CINFO.BIN"));
+        copyFileIfMissing(new File(originalRoot, "GTASAsf10.b"),
+                new File(externalFilesDir, "GTASAsf10.b"));
+
         // Community texture packs normally call their index <database>.txt,
         // while this 64-bit GTA build opens <database>.ini from the root. Make
         // a non-destructive compatibility copy for every known database.

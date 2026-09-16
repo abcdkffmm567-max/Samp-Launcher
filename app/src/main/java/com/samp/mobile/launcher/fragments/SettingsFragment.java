@@ -57,6 +57,7 @@ public class SettingsFragment extends Fragment {
 
     Spinner autoCompleteTextView;
     ArrayAdapter<String> adapter;
+    private boolean bindingSettings;
 
 
     @Override
@@ -71,6 +72,9 @@ public class SettingsFragment extends Fragment {
         mFPSSwitch = view.findViewById(R.id.fps_switch);
         mMonetSwitch = view.findViewById(R.id.monet_switch);
         mVoiceSwitch = view.findViewById(R.id.voice_switch);
+        // The bundled native voice plugin is ABI-incompatible with this build
+        // and is intentionally disabled to prevent a startup crash.
+        mVoiceSwitch.setEnabled(false);
         mModifySwitch = view.findViewById(R.id.modify_switch);
         mMessagesSeekBar = view.findViewById(R.id.messages_seekbar);
         mMessagesText = view.findViewById(R.id.messages_count);
@@ -85,7 +89,8 @@ public class SettingsFragment extends Fragment {
         try {
             mWini = new Wini(file);
 
-            mNickName.setText(mWini.get("client", "name"));
+            String nickname = mWini.get("client", "name");
+            mNickName.setText(nickname == null ? "Nick_Name" : nickname);
 
             mWini.store();
         } catch (IOException e) {
@@ -95,6 +100,7 @@ public class SettingsFragment extends Fragment {
         autoCompleteTextView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (bindingSettings) return;
                 new SharedPreferenceCore().setInt(requireContext().getApplicationContext(), "VERSION", position);
                 File file = new File(getActivity().getExternalFilesDir(null) + "/SAMP/settings.ini");
                 if(file.exists()) {
@@ -123,6 +129,7 @@ public class SettingsFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (bindingSettings) return;
                 String text = charSequence.toString();
                 File file = new File(getActivity().getExternalFilesDir(null) + "/SAMP/settings.ini");
                 if(file.exists()) {
@@ -146,6 +153,7 @@ public class SettingsFragment extends Fragment {
         mModifySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (bindingSettings) return;
                 new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "MODIFIED_DATA", b);
             }
         });
@@ -158,6 +166,7 @@ public class SettingsFragment extends Fragment {
         mKeyboardSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (bindingSettings) return;
                 new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "ANDROID_KEYBOARD", b);
                 try {
                     if(mWini != null) {
@@ -173,10 +182,11 @@ public class SettingsFragment extends Fragment {
         mVoiceSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "AIM", b);
+                if (bindingSettings) return;
+                new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "VOICE_CHAT", b);
                 try {
                     if(mWini != null) {
-                        mWini.put("gui", "autoaim", b);
+                        mWini.put("gui", "VoiceChatEnable", b);
                         mWini.store();
                     }
                 } catch (IOException e) {
@@ -188,6 +198,7 @@ public class SettingsFragment extends Fragment {
         mFPSSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (bindingSettings) return;
                 new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "FPS_DISPLAY", b);
                 try {
                     if(mWini != null) {
@@ -203,6 +214,7 @@ public class SettingsFragment extends Fragment {
         mMonetSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (bindingSettings) return;
                 new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "MLOADER", b);
             }
         });
@@ -210,6 +222,7 @@ public class SettingsFragment extends Fragment {
         // perform seek bar change listener event used for getting the progress value
         mMessagesSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (bindingSettings || !fromUser) return;
                 int realProgress = 0;
                 switch(progress)
                 {
@@ -256,6 +269,7 @@ public class SettingsFragment extends Fragment {
         // perform seek bar change listener event used for getting the progress value
         mFPSSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (bindingSettings || !fromUser) return;
                 int realProgress = 0;
                 switch(progress)
                 {
@@ -306,15 +320,16 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
+        bindingSettings = true;
         mKeyboardSwitch.setChecked(new SharedPreferenceCore().getBoolean(requireContext().getApplicationContext(), "ANDROID_KEYBOARD"));
-        mVoiceSwitch.setChecked(new SharedPreferenceCore().getBoolean(requireContext().getApplicationContext(), "AIM"));
+        mVoiceSwitch.setChecked(false);
         mFPSSwitch.setChecked(new SharedPreferenceCore().getBoolean(requireContext().getApplicationContext(), "FPS_DISPLAY"));
         mModifySwitch.setChecked(new SharedPreferenceCore().getBoolean(requireContext().getApplicationContext(), "MODIFIED_DATA"));
         mMonetSwitch.setChecked(new SharedPreferenceCore().getBoolean(requireContext().getApplicationContext(), "MLOADER"));
         autoCompleteTextView.setSelection(new SharedPreferenceCore().getInt(requireContext().getApplicationContext(), "VERSION"));
 
         int fps = new SharedPreferenceCore().getInt(getContext(), "FPS_LIMIT");
+        if (fps != 30 && fps != 60 && fps != 90 && fps != 120) fps = 60;
         switch (fps)
         {
             case 30: mFPSSeekBar.setProgress(0); break;
@@ -325,6 +340,7 @@ public class SettingsFragment extends Fragment {
         mFPSText.setText(String.valueOf(fps));
 
         int message = new SharedPreferenceCore().getInt(getContext(), "MESSAGE_COUNT");
+        if (message != 6 && message != 9 && message != 12 && message != 15) message = 9;
         switch (message)
         {
             case 6: mMessagesSeekBar.setProgress(0); break;
@@ -333,5 +349,6 @@ public class SettingsFragment extends Fragment {
             case 15: mMessagesSeekBar.setProgress(3); break;
         }
         mMessagesText.setText(String.valueOf(message));
+        bindingSettings = false;
     }
 }
