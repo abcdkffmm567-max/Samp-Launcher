@@ -42,15 +42,19 @@ public final class GpuDataManager {
         File root = context.getExternalFilesDir(null);
         if (root == null) return 0;
         int renamed = renameGpuFiles(root, suffix);
-        renamed += ensureSelectedVariant(new File(root, "texdb"), suffix);
+        File texdbRoot = new File(root, "texdb");
+        renamed += ensureSelectedVariant(texdbRoot, suffix);
+
+        // This GTA build uses the renderer-selected format for the world/UI
+        // databases, but its player database is opened as DXT. Keep this
+        // database-specific exception instead of forcing every database to DXT.
+        renamed += ensureDatabaseVariant(new File(texdbRoot, "player"), "player", "dxt");
         return renamed;
     }
 
     public static int prepareUsingStoredGpu(Context context) {
-        // This bundled libGTASA build requests DXT database names even on
-        // devices whose renderer also supports ETC. Prepare the filenames the
-        // native runtime actually opens (confirmed by samp_log backtraces).
-        return prepare(context, "dxt");
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return prepare(context, preferences.getString(KEY_SUFFIX, "etc"));
     }
 
     private static int renameGpuFiles(File file, String suffix) {
@@ -102,6 +106,19 @@ public final class GpuDataManager {
                         new String[]{"RENAME", "dxt", "etc", "pvr", "unc"}, suffix);
                 if (source != null && source.renameTo(target)) renamed++;
             }
+        }
+        return renamed;
+    }
+
+    private static int ensureDatabaseVariant(File folder, String database, String suffix) {
+        if (folder == null || !folder.isDirectory()) return 0;
+        int renamed = 0;
+        for (String extension : new String[]{"dat", "tmb", "toc"}) {
+            File target = new File(folder, database + "." + suffix + "." + extension);
+            if (target.exists()) continue;
+            File source = firstExisting(folder, database, extension,
+                    new String[]{"RENAME", "dxt", "etc", "pvr", "unc"}, suffix);
+            if (source != null && source.renameTo(target)) renamed++;
         }
         return renamed;
     }
