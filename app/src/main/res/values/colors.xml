@@ -55,9 +55,9 @@
     <color name="black_75_transparency">#bf000000</color>
     <color name="blue">#ff3ea2ff</color>
     <color name="gray">#ff666666</color>
-    <color name="colorAccent">#ffed4319</color>
-    <color name="colorPrimary">#ff000000</color>
-    <color name="colorPrimaryDark">#ff000000</color>
+    <color name="colorAccent">#29B6F6</color>
+    <color name="colorPrimary">#0A2942</color>
+    <color name="colorPrimaryDark">#061A2B</color>
     <color name="red_7">#ff250000</color>
     <color name="red_bg_queue_smi_dialog">#ffe2310c</color>
     <color name="red_bg_queue_smi_dialog_15">#26e2310c</color>

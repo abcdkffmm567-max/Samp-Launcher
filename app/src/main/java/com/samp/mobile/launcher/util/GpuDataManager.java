@@ -41,7 +41,9 @@ public final class GpuDataManager {
 
         File root = context.getExternalFilesDir(null);
         if (root == null) return 0;
-        return renameGpuFiles(root, suffix);
+        int renamed = renameGpuFiles(root, suffix);
+        renamed += ensureSelectedVariant(new File(root, "texdb"), suffix);
+        return renamed;
     }
 
     public static int prepareUsingStoredGpu(Context context) {
@@ -70,5 +72,46 @@ public final class GpuDataManager {
         // Never overwrite an already prepared texture database.
         if (destination.exists()) return 0;
         return file.renameTo(destination) ? 1 : 0;
+    }
+
+    /**
+     * Some community data packs contain only one named variant for databases
+     * such as player (for example player.pvr.*), while the GTA driver asks for
+     * another supported suffix (for example player.dxt.*). The three files are
+     * a database set, so expose the available set under the suffix selected by
+     * the current OpenGL driver instead of letting native code dereference a
+     * missing .tmb file and crash.
+     */
+    private static int ensureSelectedVariant(File texdbRoot, String suffix) {
+        if (texdbRoot == null || !texdbRoot.isDirectory()) return 0;
+
+        int renamed = 0;
+        File[] databaseFolders = texdbRoot.listFiles();
+        if (databaseFolders == null) return 0;
+
+        for (File folder : databaseFolders) {
+            if (!folder.isDirectory()) continue;
+            String database = folder.getName();
+            for (String extension : new String[]{"dat", "tmb", "toc"}) {
+                File target = new File(folder, database + "." + suffix + "." + extension);
+                if (target.exists()) continue;
+
+                File source = firstExisting(folder, database, extension,
+                        new String[]{"RENAME", "dxt", "etc", "pvr", "unc"}, suffix);
+                if (source != null && source.renameTo(target)) renamed++;
+            }
+        }
+        return renamed;
+    }
+
+    private static File firstExisting(File folder, String database, String extension,
+                                      String[] variants, String excludedVariant) {
+        for (String variant : variants) {
+            if (variant.equalsIgnoreCase(excludedVariant)) continue;
+            File candidate = new File(folder,
+                    database + "." + variant + "." + extension);
+            if (candidate.exists()) return candidate;
+        }
+        return null;
     }
 }

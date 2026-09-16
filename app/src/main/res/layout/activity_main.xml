@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
-    android:background="@color/colorPrimary"
+    android:background="@drawable/launcher_light_blue_background"
     android:keepScreenOn="true">
 
     <com.samp.mobile.launcher.util.ViewPagerWithoutSwipe
@@ -27,7 +27,7 @@
         app:tabGravity="fill"
         app:tabIndicatorGravity="top"
         app:tabIndicatorHeight="@dimen/_5sdp"
-        android:background="@color/colorPrimary"
+        android:background="#B3061A2B"
         app:tabBackground="@android:color/transparent"
         app:tabIndicatorColor="#00A8FF"
         app:tabSelectedTextColor="#00A8FF"

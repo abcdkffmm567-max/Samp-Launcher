@@ -1,8 +1,13 @@
 package com.samp.mobile.launcher;
 
+import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +25,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -72,6 +79,8 @@ import javax.microedition.khronos.opengles.GL10;
 @Obfuscate
 public class MainActivity extends AppCompatActivity {
 
+    private static final int FIRST_LAUNCH_PERMISSIONS = 2406;
+
     public String[] tabTitles = { "Home", "Play", "Settings" };
     public int[] tabImages = { R.drawable.ic_mainmenu, R.drawable.ic_server, R.drawable.ic_settingsmenu};
     public int[] tabSelectedImages = { R.drawable.ic_mainmenu_on, R.drawable.ic_serveron, R.drawable.ic_settingsmenu_on};
@@ -109,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
         ConfigValidator.validateConfigFiles(this);
         initializeGpuDataSupport();
+        requestFirstLaunchPermissions();
 
         //if(!SignatureChecker.isSignatureValid(this, getPackageName()))
         //{
@@ -166,6 +176,49 @@ public class MainActivity extends AppCompatActivity {
         getServersInfo();
         getFavoriteServersInfo();
         serverRefreshHandler.post(serverRefreshRunnable);
+        animateLauncherEntrance();
+    }
+
+    private void requestFirstLaunchPermissions() {
+        ArrayList<String> permissions = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.RECORD_AUDIO);
+        }
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+            }
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+
+        if (!permissions.isEmpty()) {
+            ActivityCompat.requestPermissions(this,
+                    permissions.toArray(new String[0]), FIRST_LAUNCH_PERMISSIONS);
+        }
+    }
+
+    private void animateLauncherEntrance() {
+        View root = findViewById(R.id.main_layout);
+        root.setAlpha(0.0f);
+        root.setScaleX(0.97f);
+        root.setScaleY(0.97f);
+
+        ObjectAnimator fade = ObjectAnimator.ofFloat(root, View.ALPHA, 0.0f, 1.0f);
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(root, View.SCALE_X, 0.97f, 1.0f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(root, View.SCALE_Y, 0.97f, 1.0f);
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(fade, scaleX, scaleY);
+        animatorSet.setDuration(550);
+        animatorSet.start();
     }
 
     private void initializeGpuDataSupport() {
