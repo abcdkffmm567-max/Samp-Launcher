@@ -5,6 +5,7 @@ import android.content.res.AssetManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,11 +23,50 @@ public class ConfigValidator {
         copyAssetTree(context.getAssets(), "Text", new File(externalFilesDir, "Text"));
         copyAssetTree(context.getAssets(), "Textures", new File(externalFilesDir, "Textures"));
         copyAssetTree(context.getAssets(), "Fonts", new File(externalFilesDir, "SAMP/fonts"));
+
+        // GTA reads these files directly from the external-files root. Keeping
+        // them only inside the APK makes NVFOpen return null later in CGame::Init1.
+        copyAssetIfMissing(context.getAssets(), "scache.txt",
+                new File(externalFilesDir, "scache.txt"));
+        copyAssetIfMissing(context.getAssets(), "scache_small.txt",
+                new File(externalFilesDir, "scache_small.txt"));
+        copyAssetIfMissing(context.getAssets(), "scache_small_low.txt",
+                new File(externalFilesDir, "scache_small_low.txt"));
+
+        // Community texture packs normally call their index <database>.txt,
+        // while this 64-bit GTA build opens <database>.ini from the root. Make
+        // a non-destructive compatibility copy for every known database.
+        for (String database : new String[]{"gta3", "gta_int", "txd", "player", "samp"}) {
+            File source = new File(externalFilesDir,
+                    "texdb/" + database + "/" + database + ".txt");
+            File destination = new File(externalFilesDir, database + ".ini");
+            copyFileIfMissing(source, destination);
+        }
         /*File file2 = new File(externalFilesDir, "gta_sa.set");
         if (!file2.exists()) {
             file2.getParentFile().mkdirs();
             copyAsset(context.getAssets(), "gta_sa.set", file2.toString());
         }*/
+    }
+
+    private static void copyAssetIfMissing(AssetManager assets, String asset, File destination) {
+        if (destination.exists() && destination.length() > 0) return;
+        File parent = destination.getParentFile();
+        if (parent != null) parent.mkdirs();
+        copyAsset(assets, asset, destination.toString());
+    }
+
+    private static void copyFileIfMissing(File source, File destination) {
+        if (!source.isFile() || source.length() == 0 ||
+                (destination.exists() && destination.length() > 0)) return;
+        File parent = destination.getParentFile();
+        if (parent != null) parent.mkdirs();
+        try (InputStream input = new FileInputStream(source);
+             OutputStream output = new FileOutputStream(destination)) {
+            copyFile(input, output);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     static void copyAssetTree(AssetManager assetManager, String assetPath, File output) {

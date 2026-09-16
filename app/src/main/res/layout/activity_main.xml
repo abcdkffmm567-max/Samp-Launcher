@@ -10,6 +10,28 @@
     android:background="@drawable/launcher_light_blue_background"
     android:keepScreenOn="true">
 
+    <ImageView
+        android:id="@+id/launcher_background_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop"
+        android:src="@drawable/infinity_launcher_background"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/background_tint"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#66031828"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.samp.mobile.launcher.util.ViewPagerWithoutSwipe
         android:id="@+id/fragment_place"
         android:layout_width="0dp"
@@ -38,5 +60,16 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
+
+    <com.samp.mobile.launcher.util.SnowfallView
+        android:id="@+id/snowfall_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="false"
+        android:focusable="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
