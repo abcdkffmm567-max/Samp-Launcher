@@ -236,14 +236,18 @@ public class MainActivity extends AppCompatActivity {
                 String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
                 String suffix = GpuDataManager.detectSuffix(renderer, extensions);
                 int renamed = GpuDataManager.prepare(MainActivity.this, suffix);
+                File missingTexture = GpuDataManager.findMissingCoreTexture(MainActivity.this);
                 Log.i("InfinityGPU", "GPU=" + renderer + ", format=" + suffix +
                         ", renamed=" + renamed);
                 runOnUiThread(() -> {
                     ViewGroup parent = (ViewGroup) gpuView.getParent();
                     if (parent != null) parent.removeView(gpuView);
-                    Toast.makeText(MainActivity.this,
-                            "Modified data ready (" + suffix.toUpperCase() + ", " +
-                                    renamed + " files)", Toast.LENGTH_LONG).show();
+                    String message = missingTexture == null
+                            ? "Modified data ready (" + suffix.toUpperCase() + ", " +
+                                    renamed + " files)"
+                            : "Data conversion failed. Missing: " + missingTexture.getName() +
+                                    ". Copy the complete data pack and try again.";
+                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
                 });
             }
 

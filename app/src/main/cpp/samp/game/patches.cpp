@@ -142,6 +142,16 @@ void ApplyPatches_level0()
 {
     FLog("ApplyPatches_level0");
 
+    /*
+     * Several community Android data packs ship an effects project from a
+     * different GTA build.  The 2.10 arm64 loader then dereferences invalid
+     * interpolation data in FxInterpInfo32_c::Load during CGame::Init1.  The
+     * project is visual-only, so skip just that incompatible project loader;
+     * the FX manager itself remains initialized and the game can continue.
+     */
+    CHook::RET("_ZN11FxManager_c13LoadFxProjectEPc");
+    FLog("Incompatible external FX project loader disabled");
+
     CHook::Write(g_libGTASA + (VER_x32 ? 0x006783C0 : 0x84E7A8), &CWorld::Players);
     CHook::Write(g_libGTASA + (VER_x32 ? 0x00679B5C : 0x8516D8), &CWorld::PlayerInFocus);
 

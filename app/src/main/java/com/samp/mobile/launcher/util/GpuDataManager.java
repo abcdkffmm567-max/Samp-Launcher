@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public final class GpuDataManager {
     private static final String PREFS = "infinity_gpu_data";
@@ -77,7 +80,7 @@ public final class GpuDataManager {
 
         // Never overwrite an already prepared texture database.
         if (destination.exists()) return 0;
-        return file.renameTo(destination) ? 1 : 0;
+        return copyVariant(file, destination) ? 1 : 0;
     }
 
     /**
@@ -103,8 +106,8 @@ public final class GpuDataManager {
                 if (target.exists()) continue;
 
                 File source = firstExisting(folder, database, extension,
-                        new String[]{"RENAME", "dxt", "etc", "pvr", "unc"}, suffix);
-                if (source != null && source.renameTo(target)) renamed++;
+                        new String[]{"RENAME", "360", "dxt", "etc", "pvr", "unc"}, suffix);
+                if (source != null && copyVariant(source, target)) renamed++;
             }
         }
         return renamed;
@@ -117,8 +120,8 @@ public final class GpuDataManager {
             File target = new File(folder, database + "." + suffix + "." + extension);
             if (target.exists()) continue;
             File source = firstExisting(folder, database, extension,
-                    new String[]{"RENAME", "dxt", "etc", "pvr", "unc"}, suffix);
-            if (source != null && source.renameTo(target)) renamed++;
+                    new String[]{"RENAME", "360", "dxt", "etc", "pvr", "unc"}, suffix);
+            if (source != null && copyVariant(source, target)) renamed++;
         }
         return renamed;
     }
@@ -131,6 +134,43 @@ public final class GpuDataManager {
                     database + "." + variant + "." + extension);
             if (candidate.exists()) return candidate;
         }
+        return null;
+    }
+
+    private static boolean copyVariant(File source, File destination) {
+        File parent = destination.getParentFile();
+        if (parent != null) parent.mkdirs();
+        try (FileInputStream input = new FileInputStream(source);
+             FileOutputStream output = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[64 * 1024];
+            int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            output.flush();
+            return destination.length() == source.length();
+        } catch (IOException e) {
+            if (destination.exists()) destination.delete();
+            return false;
+        }
+    }
+
+    public static String getStoredSuffix(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_SUFFIX, "etc");
+    }
+
+    /** Returns the first native texture file that would crash on load. */
+    public static File findMissingCoreTexture(Context context) {
+        File root = context.getExternalFilesDir(null);
+        if (root == null) return new File("external-files-unavailable");
+        String suffix = getStoredSuffix(context);
+        File txd = new File(root, "texdb/txd/txd." + suffix + ".tmb");
+        if (!txd.isFile() || txd.length() == 0) return txd;
+        File gta3 = new File(root, "texdb/gta3/gta3." + suffix + ".tmb");
+        if (!gta3.isFile() || gta3.length() == 0) return gta3;
+        File gtaInt = new File(root, "texdb/gta_int/gta_int." + suffix + ".tmb");
+        if (!gtaInt.isFile() || gtaInt.length() == 0) return gtaInt;
+        File player = new File(root, "texdb/player/player.dxt.tmb");
+        if (!player.isFile() || player.length() == 0) return player;
         return null;
     }
 }
