@@ -17,11 +17,36 @@ public class ConfigValidator {
             file.getParentFile().mkdirs();
             copyAsset(context.getAssets(), "settings.ini", file.toString());
         }
+        // The native game expects these APK assets in the app's external files
+        // directory. Extract them once so Android 10-14 can load them reliably.
+        copyAssetTree(context.getAssets(), "Text", new File(externalFilesDir, "Text"));
+        copyAssetTree(context.getAssets(), "Textures", new File(externalFilesDir, "Textures"));
         /*File file2 = new File(externalFilesDir, "gta_sa.set");
         if (!file2.exists()) {
             file2.getParentFile().mkdirs();
             copyAsset(context.getAssets(), "gta_sa.set", file2.toString());
         }*/
+    }
+
+    static void copyAssetTree(AssetManager assetManager, String assetPath, File output) {
+        try {
+            String[] children = assetManager.list(assetPath);
+            if (children == null || children.length == 0) {
+                if (!output.exists()) {
+                    File parent = output.getParentFile();
+                    if (parent != null) parent.mkdirs();
+                    copyAsset(assetManager, assetPath, output.toString());
+                }
+                return;
+            }
+
+            output.mkdirs();
+            for (String child : children) {
+                copyAssetTree(assetManager, assetPath + "/" + child, new File(output, child));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     static boolean copyAsset(AssetManager assetManager, String str, String str2) {
