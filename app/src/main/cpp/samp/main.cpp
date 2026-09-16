@@ -321,9 +321,15 @@ void MainLoop()
 
 void InitGui()
 {
-	// new voice
-	Plugin::OnPluginLoad();
-	Plugin::OnSampLoad();
+	/*
+	 * The bundled voice plugin aborts on some Android/NDK combinations while
+	 * registering its Network callbacks.  That happens during Initialise3D and
+	 * terminates the whole client before SA-MP can enter the server.  Voice is an
+	 * optional extension, so keep it disabled until its native callback ABI is
+	 * fixed.  Plugin::MainLoop is only installed by OnPluginLoad, therefore no
+	 * voice code is executed after this point.
+	 */
+	FLog("Voice plugin disabled: using stable SA-MP startup path");
 
 	std::string font_path = string_format("%sSAMP/fonts/%s", g_pszStorage, FONT_NAME);
 	pUI = new UI(ImVec2(RsGlobal->maximumWidth, RsGlobal->maximumHeight), font_path.c_str());
