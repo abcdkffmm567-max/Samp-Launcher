@@ -47,8 +47,10 @@ public final class GpuDataManager {
     }
 
     public static int prepareUsingStoredGpu(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        return prepare(context, preferences.getString(KEY_SUFFIX, "etc"));
+        // This bundled libGTASA build requests DXT database names even on
+        // devices whose renderer also supports ETC. Prepare the filenames the
+        // native runtime actually opens (confirmed by samp_log backtraces).
+        return prepare(context, "dxt");
     }
 
     private static int renameGpuFiles(File file, String suffix) {

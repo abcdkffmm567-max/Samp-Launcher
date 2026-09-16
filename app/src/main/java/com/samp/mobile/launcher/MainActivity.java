@@ -305,7 +305,8 @@ public class MainActivity extends AppCompatActivity {
                         server.setCurrentPlayerCount(Integer.parseInt(info[1]));
                         server.setMaxPlayerCount(Integer.parseInt(info[2]));
                         server.setServerName(info[3]);
-                        server.setServerMode(info[5]);
+                        server.setServerMode(info[4]);
+                        server.setLanguage(info[5]);
                         server.setServerStatus(SAMPServerInfo.Status.ONLINE);
                     } catch (Exception e) {
                         Log.e("InfinityQuery", "Invalid server response", e);
@@ -359,14 +360,27 @@ public class MainActivity extends AppCompatActivity {
             if(getFavoriteServerList().size() > intValue) {
                 if(!getFavoriteServerList().get(intValue).getQueried()) {
                     SampQueryAPI sampQuery = new SampQueryAPI(getFavoriteServerList().get(intValue).getAddress(), getFavoriteServerList().get(intValue).getPort());
-                    if (!sampQuery.mo7166d()) {
+                    try {
+                        if (!sampQuery.mo7166d()) return null;
+                        String[] info = sampQuery.mo7164b();
+                        if (info == null || info.length < 6) return null;
+
+                        SAMPServerInfo queriedServer = new SAMPServerInfo(intValue, intValue,
+                                info[3], getFavoriteServerList().get(intValue).getAddress(),
+                                getFavoriteServerList().get(intValue).getPort(),
+                                Integer.parseInt(info[1]), Integer.parseInt(info[2]),
+                                Integer.parseInt(info[0]), 1, 1, info[5]);
+                        queriedServer.setServerMode(info[4]);
+                        queriedServer.setLanguage(info[5]);
+                        queriedServer.setFavorite(true);
+                        queriedServer.setServerStatus(SAMPServerInfo.Status.ONLINE);
+                        getFavoriteServerList().set(intValue, queriedServer);
+                    } catch (Exception error) {
+                        Log.e("FavoriteQuery", "Could not query favorite server", error);
                         return null;
-                    }
-                    String[] info = sampQuery.mo7164b();
-                    getFavoriteServerList().set(intValue, new SAMPServerInfo(intValue, intValue, info[3], getFavoriteServerList().get(intValue).getAddress(), getFavoriteServerList().get(intValue).getPort(), Integer.parseInt(info[1]), Integer.parseInt(info[2]), Integer.parseInt(info[0]), 0, 0, info[5]));
-                    DatagramSocket datagramSocket = sampQuery.f7277a;
-                    if (datagramSocket != null) {
-                        datagramSocket.close();
+                    } finally {
+                        DatagramSocket datagramSocket = sampQuery.f7277a;
+                        if (datagramSocket != null) datagramSocket.close();
                     }
                     getFavoriteServerList().get(intValue).setQueried(true);
 

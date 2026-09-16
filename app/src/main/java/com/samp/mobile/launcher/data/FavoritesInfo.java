@@ -16,19 +16,25 @@ import org.json.JSONObject;
 
 /* renamed from: ru.unisamp_mobile.launcher.FavoritesInfo */
 public class FavoritesInfo {
+    private static final String PREFS = "infinity_favorites_backup";
+    private static final String PREFS_JSON = "servers_json";
     private static boolean bLoaded = false;
     private static ArrayList<FavoriteServerData> serverList = new ArrayList<>();
 
     public static void Load(Context mContext) {
         File file = new File(mContext.getExternalFilesDir(null), "SAMP/favorites.json");
-        if (!file.exists()) {
-            ClearFavorites();
-            return;
-        }
+        serverList.clear();
         try {
-            String InputStreamToString = Util.InputStreamToString(new FileInputStream(file));
+            String InputStreamToString;
+            if (file.exists()) {
+                InputStreamToString = Util.InputStreamToString(new FileInputStream(file));
+            } else {
+                InputStreamToString = mContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                        .getString(PREFS_JSON, "");
+            }
             if (InputStreamToString.isEmpty()) {
                 ClearFavorites();
+                bLoaded = true;
                 return;
             }
             JSONArray jSONArray = new JSONObject(InputStreamToString).getJSONArray("servers");
@@ -75,8 +81,11 @@ public class FavoritesInfo {
             new File(context.getExternalFilesDir(null), "SAMP/").mkdirs();
             file.createNewFile();
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
-            bufferedWriter.write(jSONObject.toString());
+            String json = jSONObject.toString();
+            bufferedWriter.write(json);
             bufferedWriter.close();
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                    .edit().putString(PREFS_JSON, json).apply();
         } catch (Exception e) {
             e.printStackTrace();
         }
