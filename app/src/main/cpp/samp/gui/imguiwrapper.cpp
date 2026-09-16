@@ -62,8 +62,16 @@ bool ImGuiWrapper::initialize()
 
 	if (font == nullptr)
 	{
-		Log::addParameter("font", font);
-		return false;
+		// A number of third-party data packs do not contain SAMP/fonts/arial_bold.ttf.
+		// ImGui can still run safely with its embedded font, so do not abort game
+		// startup just because the optional external font is absent or invalid.
+		FLog("External UI font unavailable (%s); using ImGui default font", m_fontPath.c_str());
+		font = io.Fonts->AddFontDefault();
+		if (font == nullptr)
+		{
+			FLog("Unable to create fallback UI font");
+			return false;
+		}
 	}
 
 	createFontTexture();

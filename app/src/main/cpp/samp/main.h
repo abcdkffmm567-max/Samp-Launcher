@@ -27,7 +27,7 @@ extern char* g_pszStorage;
 #define SAMP_VERSION	"0.3.7"
 
 #define SAMP_ARCHIVE_PATH "/Android/data/com.samp.mobile/samp.data"
-#define FONT_NAME "arial_bold.ttf"
+#define FONT_NAME "HELVETICANEUELTCOM-MD.TTF"
 
 #define RAKSAMP_CLIENT
 #define NETCODE_CONNCOOKIELULZ 0x6969

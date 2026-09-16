@@ -332,9 +332,17 @@ void InitGui()
 	FLog("Voice plugin disabled: using stable SA-MP startup path");
 
 	std::string font_path = string_format("%sSAMP/fonts/%s", g_pszStorage, FONT_NAME);
+	FLog("GUI checkpoint 1: creating UI");
 	pUI = new UI(ImVec2(RsGlobal->maximumWidth, RsGlobal->maximumHeight), font_path.c_str());
-	pUI->initialize();
+	FLog("GUI checkpoint 2: initializing UI");
+	if (!pUI->initialize())
+	{
+		FLog("GUI initialization failed safely");
+		return;
+	}
+	FLog("GUI checkpoint 3: laying out UI");
 	pUI->performLayout();
+	FLog("GUI checkpoint 4: UI ready");
 }
 
 #include "game/multitouch.h"

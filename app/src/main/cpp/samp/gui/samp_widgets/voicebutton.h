@@ -15,20 +15,17 @@ class VoiceButton : public Button
 public:
 	VoiceButton() : Button("TALK", UISettings::fontSize() / 2) {
 		m_recording = false;
-		/* 5:3 aspect ratio */
-		//m_texture_micro_on = (RwTexture*)CUtil::LoadTextureFromDB("samp", "icon_micro_on");
-		//m_texture_micro_off = (RwTexture*)CUtil::LoadTextureFromDB("samp", "icon_micro_off");
-		m_texture_micro_on = (RwTexture*)CUtil::LoadTextureFromDB("samp", "voiceactive"); //default
-		//if (Server == 40) m_texture_micro_on = (RwTexture*)CUtil::LoadTextureFromDB("samp", "voiceactive");
-		//if (Server == 40) m_texture_micro_off = (RwTexture*)CUtil::LoadTextureFromDB("samp", "voicepassive");
-		m_texture_micro_off = (RwTexture*)CUtil::LoadTextureFromDB("samp", "voicepassive"); //default
-		//if (Server == 13) m_texture_micro_off = (RwTexture*)CUtil::LoadTextureFromDB("samp", "icon_micro_on");
-		//if (Server == 13) m_texture_micro_on = (RwTexture*)CUtil::LoadTextureFromDB("samp", "icon_micro_off");
+		// Voice is disabled in the stable startup path.  Do not access the optional
+		// "samp" texture database here: some data packs do not load/register it and
+		// the native lookup aborts while Initialise3D is still running.
+		m_texture_micro_on = nullptr;
+		m_texture_micro_off = nullptr;
 	}
 
 	virtual void draw(ImGuiRenderer* renderer) override
 	{
 		if(!pSettings->Get().bVoiceChatEnable) return;
+		if (!m_texture_micro_on || !m_texture_micro_off) return;
 
 		if (countdown > 0 && recording() == 1) countdown--;
 		if (countdown == 0 && recording() == 1) setRecording(0);

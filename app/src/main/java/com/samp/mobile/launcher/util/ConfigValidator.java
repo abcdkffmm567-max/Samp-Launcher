@@ -21,6 +21,7 @@ public class ConfigValidator {
         // directory. Extract them once so Android 10-14 can load them reliably.
         copyAssetTree(context.getAssets(), "Text", new File(externalFilesDir, "Text"));
         copyAssetTree(context.getAssets(), "Textures", new File(externalFilesDir, "Textures"));
+        copyAssetTree(context.getAssets(), "Fonts", new File(externalFilesDir, "SAMP/fonts"));
         /*File file2 = new File(externalFilesDir, "gta_sa.set");
         if (!file2.exists()) {
             file2.getParentFile().mkdirs();
