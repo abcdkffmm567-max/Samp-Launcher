@@ -27,7 +27,6 @@ import com.samp.mobile.game.SAMP;
 import com.samp.mobile.launcher.MainActivity;
 import com.samp.mobile.launcher.data.FavoritesInfo;
 import com.samp.mobile.launcher.util.ButtonAnimator;
-import com.samp.mobile.launcher.util.GpuDataManager;
 import com.samp.mobile.launcher.util.SAMPServerInfo;
 import com.samp.mobile.launcher.util.SharedPreferenceCore;
 
@@ -130,7 +129,6 @@ public class FavouriteServerInformationFragment extends Dialog {
         mConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                GpuDataManager.prepareUsingStoredGpu(act);
                 File file = new File(act.getExternalFilesDir(null) + "/SAMP/settings.ini");
                 if(file.exists()) {
                     try {

@@ -147,6 +147,11 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 new SharedPreferenceCore().setBoolean(requireContext().getApplicationContext(), "MODIFIED_DATA", b);
+                // setChecked() is also called while restoring Settings. Convert
+                // only for a real user tap, never automatically on app startup.
+                if (b && compoundButton.isPressed()) {
+                    ((MainActivity) requireActivity()).prepareModifiedData();
+                }
             }
         });
 

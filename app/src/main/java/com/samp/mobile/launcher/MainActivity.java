@@ -117,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         mFavoriteServersList = new ArrayList<>();
 
         ConfigValidator.validateConfigFiles(this);
-        initializeGpuDataSupport();
         requestFirstLaunchPermissions();
 
         //if(!SignatureChecker.isSignatureValid(this, getPackageName()))
@@ -221,7 +220,12 @@ public class MainActivity extends AppCompatActivity {
         animatorSet.start();
     }
 
-    private void initializeGpuDataSupport() {
+    /**
+     * Converts a manually copied data pack only when the user explicitly turns
+     * on "Modified data" in Settings. Nothing is renamed on launcher startup or
+     * when Connect is pressed.
+     */
+    public void prepareModifiedData() {
         GLSurfaceView gpuView = new GLSurfaceView(this);
         gpuView.setEGLContextClientVersion(2);
         gpuView.setAlpha(0.0f);
@@ -234,6 +238,13 @@ public class MainActivity extends AppCompatActivity {
                 int renamed = GpuDataManager.prepare(MainActivity.this, suffix);
                 Log.i("InfinityGPU", "GPU=" + renderer + ", format=" + suffix +
                         ", renamed=" + renamed);
+                runOnUiThread(() -> {
+                    ViewGroup parent = (ViewGroup) gpuView.getParent();
+                    if (parent != null) parent.removeView(gpuView);
+                    Toast.makeText(MainActivity.this,
+                            "Modified data ready (" + suffix.toUpperCase() + ", " +
+                                    renamed + " files)", Toast.LENGTH_LONG).show();
+                });
             }
 
             @Override
@@ -245,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
         gpuView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         ViewGroup root = findViewById(R.id.main_layout);
         root.addView(gpuView, new ViewGroup.LayoutParams(1, 1));
+        gpuView.requestRender();
     }
 
     public final ArrayList<SAMPServerInfo> getServerList() {
